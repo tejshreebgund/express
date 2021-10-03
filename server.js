@@ -1,44 +1,61 @@
-const express=require("express");
-const mongoose=require("mongoose");
-//connect mongoose to the express
-const connect = () =>{
-    return mongoose.connect("mongodb://127.0.0.1:27017/entertainment");// mongoose conected to mongo
+const fs = require("fs");
+const express = require('express');
+var data = fs.readFileSync("./data1.json");
+var users = JSON.parse(data);
+const app = express();
+
+app.use(express.json())
+
+app.use(logger)
+app.get("/",function(req,res){
+res.send("Welcome to Homepage")
+});
+app.get("/users",function(req,res){
+    res.send(users)
+})
+function logger(req,res,next){
+    console.log(req.body);
+    next();
 }
-//create schema
-const movieSchema=new mongoose.Schema({
-    id:{type:Number,reqiured:true},
-    movie_name:{type:String,reqiured:true},
-    movie_genre:{type:String,reqiured:false},
-    production_year:{type:Number,reqiured:true},
-    budget:{type:Number,reqiured:true}
-})
-//connect mongoose schema to mongo collection
-const Movie=mongoose.model("movie",movieSchema)//in double quote i.e. user collection whatever name get plural,model cretes class user
-const app=express();//It calls express
-app.use(express.json());
-//-----------------CRUD operation--------------------//
-app.post("/movies",async(req,res) =>{//movies :it's collection name
-    const movie=await Movie.create(req.body)// db.users.insert // mongoose whatever i pass into req.body put on documents of mongo
-    return res.status(201).send({movie})
-})
-app.get("/movies",async(req,res) =>{
-    const movies=await Movie.find().lean().exec()
-    return res.status(200).send({movies})
-})
-app.get("/movies/:id",async(req,res)=>{
-    const movie=await Movie.findById(req.params.id).lean().exec()
-    return res.status(200).send({movie})
-})
-app.patch("/movies/:id",async(req,res)=>{
-    const movie=await Movie.findByIdAndUpdate(req.params.id,req.body,{new:true})
-    return res.status(200).send({movie})
-})
-app.delete("/movies/:id",async(req,res)=>{
-    const movie=await Movie.findByIdAndDelete(req.params.id)
-    return res.status(200).send({movie})
+app.post("/users",function(req,res){
+req.body.id=users.length+1;
+users.push(req.body)
+var newData2 = JSON.stringify(users);
+fs.writeFile("./express1.json", newData2, (err) => {
+    // Error checking
+    if (err) throw err;
+    console.log("New data added");
+  });
+  
+    res.send(users)
 })
 
-app.listen(2344, async function(){//app listen our local port
-    await connect()
-    console.log("listining on the 2344 port");
+app.patch("/users/:id", function(req,res){
+    const user =  users.find(user => user.id === parseInt(req.params.id));
+    user.Author = req.body.Author;
+    user.pages = req.body.pages;
+    return res.json(user)
 })
+
+
+app.delete("/users/:id", function(req,res){
+    const user =  users.find(user => user.id === parseInt(req.params.id));
+    user["Author"] = req.body["Author"];
+    user["pages"] = req.body["pages"];
+    user["published year"] = req.body["published year"];
+    user["Book Name"] = req.body["Book Name"];
+    user["id"] = req.body["id"];
+    
+    return res.json(user)
+})
+
+
+
+
+app.listen(2345,function(){
+console.log("listening on port 2345");
+})  
+
+
+
+  
